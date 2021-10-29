@@ -70,8 +70,34 @@ class Timer {
 
 
 
+	start(min_step=40){
+
+		if(this.tick) return;
 
 
+		let now = Date.now();
+
+		const state = this.getState(now);
+		this.handleState(state);
+		this.state = state;
+
+		this.tick = () => {
+			const new_now = Date.now();
+			const delta = new_now - now;
+			if(delta >= min_step){
+				const state = this.getState(new_now);
+				this.handleState(state);
+				this.state = state;
+			}
+			this.tick && raf(this.tick);
+		}
+		this.tick.baseInterval = min_step;
+		raf(this.tick);
+	}
+
+	stop(){
+		delete this.tick;
+	}
 
 
 
@@ -108,95 +134,6 @@ class Timer {
 		this.relPeriods = new Set();
 		this.relAts = new Set();
 	}
-
-	// tick(now){
-		
-	// }
-
-	// start(baseInterval){
-
-	// 	this.started = true;
-
-	// 	let now = Date.now();
-	// 	let rel_now = this.options.rel_now;
-
-	// 	this.state = {
-	// 		now, rel_now,
-
-	// 		anchor: now,
-
-	// 		delta: 0,
-	// 		rel_delta: 0,
-
-	// 		rel_start: this.options.rel_start,
-	// 		rel_speed: this.options.rel_speed,
-	// 		rel_anchor: this.options.rel_anchor,
-	// 	};
-
-	// 	const run = () => {
-
-	// 		if(!this.started) return;
-
-	// 		const prev = now;
-	// 		const new_now = Date.now();
-	// 		const delta  = new_now - prev;
-
-	// 		const {
-	// 			rel_start,
-	// 			rel_speed,
-	// 			rel_anchor,
-	// 		} = this.options;
-
-	// 		const { anchor } = this.state;
-
-	// 		if(delta < run.baseInterval) return raf(run);
-
-
-	// 		const before_anchor = rel_anchor - rel_start;
-	// 		const after_anchor = (new_now - anchor) * rel_speed;
-	// 		const rel_new_now = rel_anchor + after_anchor;
-	// 		const rel_delta = rel_new_now - rel_now;
-	// 		now = new_now;
-	// 		rel_now = rel_new_now;
-	// 		this.prev_state = this.state;
-	// 		const time = this.state = {
-	// 			now, delta, anchor,
-
-	// 			rel_now, rel_delta, rel_anchor,
-
-	// 			rel_start, rel_speed // From options
-	// 		};
-
-	// 		// console.log((new Date(this.state.rel_now)).toISOString());
-
-	// 		if(rel_delta < 0) console.log("tick deffect: ", rel_delta)
-
-	// 		// Absolute time events
-	// 		this.handleAt(time);
-	// 		this.handleImmediates(time);
-	// 		this.handleIntervals(time);
-	// 		this.handlePeriods(time);
-	// 		if(this.handleTimeSpeedChange(time)){
-	// 			if(rel_delta > 0){
-	// 				this.handleRelAts(time);
-	// 				this.handleRelIntervals(time);
-	// 				this.handleRelPeriods(time);
-	// 			}
-	// 		}
-
-
-	// 		raf(run);
-	// 	}
-	// 	run.baseInterval = baseInterval;
-	// 	raf(run);
-	// }
-
-	// stop(){
-	// 	this.started = false;
-	// 	this.state = {};
-	// 	this.reset();
-	// }
-
 
 	// Hooks
 
