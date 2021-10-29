@@ -71,16 +71,11 @@ class Timer {
 
 
 	start(min_step=40){
-
 		if(this.tick) return;
-
-
 		let now = Date.now();
-
 		const state = this.getState(now);
 		this.handleState(state);
 		this.state = state;
-
 		this.tick = () => {
 			const new_now = Date.now();
 			const delta = new_now - now;
