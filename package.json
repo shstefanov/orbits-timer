@@ -1,0 +1,17 @@
+{
+  "name": "@orbits/timer",
+  "version": "0.1.0",
+  "description": "Library for managing time related stuff (intervals, transition, period, etc.)",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -b -p --recursive ./test"
+  },
+  "keywords": [
+    "timer"
+  ],
+  "author": "Stefan Stefanov <s.h.stefanov@mail.bg>",
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "^9.1.0"
+  }
+}
