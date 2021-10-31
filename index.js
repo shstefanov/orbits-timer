@@ -134,10 +134,12 @@ class Timer {
 
 	at(timestamp, fn){
 		if(timestamp < this.state.now) return;
-		this.ats.set(fn, {
+		let t = {
 			at:     timestamp,
 			cancel: this.removeAt.bind(this, fn),
-		});
+		};
+		this.ats.set(fn, t);
+		return t;
 	}
 
 	removeAt(fn){
@@ -171,6 +173,7 @@ class Timer {
 				cancel: this.removePeriod.bind(this, fn),
 			};
 		this.periods.set(fn, t);
+		return t;
 	}
 
 	removePeriod(fn){
@@ -217,6 +220,7 @@ class Timer {
 			cancel: this.removeTransition.bind(this, fn),
 		}
 		this.transitions.set(fn, t);
+		return t;
 	}
 
 
@@ -262,6 +266,7 @@ class Timer {
 			cancel:     this.removeInterval.bind(this, fn),
 		};
 		this.intervals.set(fn, t);
+		return t;
 	}
 
 	removeInterval(fn){
