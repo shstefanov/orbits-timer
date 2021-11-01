@@ -4,6 +4,7 @@ let raf;
 if (isBrowser()) raf = (() => window.requestAnimationFrame )();
 else             raf = (fn) => setTimeout(fn, fn.baseInterval || 0);
 
+
 function error(msg){ throw new Error(msg); }
 
 const defaultOptions = {
@@ -83,6 +84,7 @@ class Timer {
 				const state = this.getState(new_now);
 				this.handleState(state);
 				this.state = state;
+				now = new_now;
 			}
 			this.tick && raf(this.tick);
 		}
@@ -279,8 +281,8 @@ class Timer {
 			const t = this.intervals.get(fn);
 			const c = ( now - t.last_call) / t.interval;
 			if(c >= 1){
-				t.last_call += t.interval;
-				fn(this.getState(t.last_call), t.cancel);
+				t.last_call = state.now;
+				fn(state, t.cancel);
 			}
 		}
 	}
