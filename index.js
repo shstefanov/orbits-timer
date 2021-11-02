@@ -211,7 +211,7 @@ class Timer {
 			timing_function = Timer.LINEAR;
 		}
 		else{
-			start = typeof duration.start === "number" ? duration.start : now;
+			start = typeof duration.start === "number" ? duration.start : this.state.now;
 			dur = duration.duration
 			end = start + dur;
 			timing_function = duration.timing_function || Timer.LINEAR;
@@ -339,7 +339,7 @@ const { sin, cos, pow, sqrt, PI } = Math;
 
 Timer.LINEAR            = x => x;
 Timer.EASE_IN_SINE      = x => 1 - cos((x * PI) / 2);
-Timer.EASE_OUT_SINE     = x => 1 - sin((x * PI) / 2);
+Timer.EASE_OUT_SINE     = x => sin((x * PI) / 2);
 Timer.EASE_IN_OUT_SINE  = x => -(cos(PI * x) - 1) / 2;
 Timer.EASE_IN_QUAD      = x => x * x;
 Timer.EASE_OUT_QUAD     = x => 1 - (1 - x) * (1 - x);
