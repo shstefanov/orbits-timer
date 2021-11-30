@@ -4,9 +4,6 @@ let raf;
 if (isBrowser()) raf = (() => window.requestAnimationFrame )();
 else             raf = (fn) => setTimeout(fn, fn.baseInterval || 0);
 
-
-function error(msg){ throw new Error(msg); }
-
 const defaultOptions = {
 	rel_start: 0,
 	rel_speed: 1,
@@ -67,6 +64,10 @@ class Timer {
 		this.handlePeriods(state);
 		this.handleTransitions(state);
 		this.handleIntervals(state);
+		this.handleRelAt(state);
+		this.handleRelIntervals(state);
+		this.handleRelPeriods(state);
+		this.handleRelTransitions(state);
 	}
 
 
@@ -97,7 +98,18 @@ class Timer {
 	}
 
 
-
+	set({
+		speed      = 1,
+		anchor     = this.state.now,
+		rel_anchor = this.state.rel_now
+	} = {}){
+		this.options = {
+			rel_start: this.options.rel_start,
+			speed,
+			anchor,
+			rel_anchor,
+		};
+	}
 
 
 
@@ -120,16 +132,15 @@ class Timer {
 
 	reset(){
 		// this.started = false;
-		this.ats         = new Map();
-		this.periods     = new Map();
-		this.transitions = new Map();
-		this.intervals   = new Map();
-		this.immediates = new Set();
-		// this.speedChangeRequest = null;
+		this.ats           = new Map();
+		this.intervals     = new Map();
+		this.periods       = new Map();
+		this.transitions   = new Map();
 
-		this.relIntervals = new Set();
-		this.relPeriods = new Set();
-		this.relAts = new Set();
+		this.relAts         = new Map();
+		this.relIntervals   = new Map();
+		this.relPeriods     = new Map();
+		this.relTransitions = new Map();
 	}
 
 	// Hooks
@@ -166,7 +177,7 @@ class Timer {
 		const t = typeof period === "number"
 		? 	{
 				period,
-				offset: 0,
+				offset: this.state.now,
 				cancel: this.removePeriod.bind(this, fn),
 			}
 		: 	{
@@ -291,44 +302,169 @@ class Timer {
 
 
 
+	// Relative time hooks
 
 
-
-
-
-	// Affects only relative time flow
-	setRelSpeed(rel_speed, starting_at, cb){
-		this.speedChangeRequest = {
-			rel_speed, starting_at, cb
+	relAt(timestamp, fn){
+		if(timestamp < this.state.rel_now) return;
+		let t = {
+			at:     timestamp,
+			cancel: this.removeRelAt.bind(this, fn),
 		};
+		this.relAts.set(fn, t);
+		return t;
+	}
+
+	removeRelAt(fn){
+		this.relAts.delete(fn);
+	}
+
+	handleRelAt(state){
+		const {rel_now} = state;
+		for(let [fn] of this.relAts.entries()){
+			const t = this.relAts.get(fn);
+			if(rel_now >= t.at){
+				this.removeRelAt(fn);
+				fn(state);
+			}
+		}
 	}
 
 
-	relPeriod(period, fn){
-		fn.time = {
-			period,
-			cancel: this.removeRelPeriod.bind(this, fn),
+
+
+
+
+
+
+	relInterval(interval, fn){
+		const t = typeof interval === "number"
+		? {
+			// last_call:  this.state.rel_now - interval,
+			offset:     0,
+			base:       0,
+			interval:   interval,
+			cancel:     this.removeRelInterval.bind(this, fn),
+		}
+		: {
+			// last_call:  interval.base,
+			offset:     this.state.rel_now - interval.base,
+			base:       interval.base,
+			interval:   interval.interval,
+			cancel:     this.removeRelInterval.bind(this, fn),
 		};
-		this.relPeriods.add(fn);
-		return fn;
+
+		t.last_call = null;
+
+		this.relIntervals.set(fn, t);
+		return t;
+	}
+
+	removeRelInterval(fn){
+		this.relIntervals.delete(fn);
+	}
+
+	handleRelIntervals(state){
+		const { rel_now } = state;
+		for(let [fn] of this.relIntervals.entries()){
+			const t = this.relIntervals.get(fn);
+			const c = rel_now - t.base;
+			const l = c - ( c % t.interval) + t.base;
+			if(l !== t.last_call){
+				t.last_call = l;
+				fn(state, t.cancel);
+			}
+		}
+	}
+
+
+
+	relPeriod(period, fn){
+		const t = typeof period === "number"
+		? 	{
+				period,
+				offset: this.state.rel_now,
+				cancel: this.removeRelPeriod.bind(this, fn),
+			}
+		: 	{
+				period: period.period,
+				offset: period.base,
+				cancel: this.removeRelPeriod.bind(this, fn),
+			};
+		this.relPeriods.set(fn, t);
+		return t;
 	}
 
 	removeRelPeriod(fn){
 		this.relPeriods.delete(fn);
 	}
 
-	relAt(timestamp, fn){
-		if(timestamp < this.state.rel_now) return;
-		fn.time = {
-			at: timestamp,
-			cancel: this.removeRelAt.bind(this, fn),
-		};
-		this.relAts.add(fn);
-		return fn;
+	handleRelPeriods(state){
+		const {rel_now} = state;
+		for(let [fn] of this.relPeriods.entries()){
+			const t = this.relPeriods.get(fn);
+			const time_base = rel_now - t.offset;
+			const period = t.period;
+			const phase = (
+				time_base >= 0
+					? ( time_base % period)
+					: ( (period - 1) + (( time_base + 1 ) % period))
+				) / period;
+			fn(state, phase, t.cancel);
+		}
 	}
 
-	removeRelAt(fn){
-		this.relAts.delete(fn);
+
+
+
+
+
+	relTransition(duration, fn){
+		// const now = Date.now();
+		let start, end, dur, timing_function;
+		if(typeof duration === "number"){
+			dur             = duration;
+			start           = this.state.rel_now;
+			end             = start + duration;
+			timing_function = Timer.LINEAR;
+		}
+		else{
+			start = typeof duration.start === "number" ? duration.start : this.state.rel_now;
+			dur = duration.duration
+			end = start + dur;
+			timing_function = duration.timing_function || Timer.LINEAR;
+		}
+
+		const t = {
+			start, end, duration: dur, timing_function,
+			cancel: this.removeRelTransition.bind(this, fn),
+		}
+		this.relTransitions.set(fn, t);
+		return t;
+	}
+
+
+	removeRelTransition(fn){
+		this.relTransitions.delete(fn);
+	}
+
+
+	handleRelTransitions(state){
+		const { rel_now } = state;
+		for(let [fn] of this.relTransitions.entries()){
+			const t = this.relTransitions.get(fn);
+			const { start, end, duration, cancel } = t;
+			const path = (rel_now - t.start) / t.duration;
+			if(path < 0) return fn(state, t.timing_function(0), t.cancel);
+			if(path > 1) return fn(state, t.timing_function(1), t.cancel);
+			if(path >= 1){
+				fn(state, t.timing_function(1), t.cancel);
+				this.removeTransition(fn);
+			}
+			else{
+				fn(state, t.timing_function(path), t.cancel);
+			}
+		}
 	}
 
 }

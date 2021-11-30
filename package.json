@@ -1,6 +1,6 @@
 {
   "name": "@orbits/timer",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Library for managing time related stuff (intervals, transition, period, etc.)",
   "main": "index.js",
   "scripts": {
@@ -10,6 +10,10 @@
     "timer"
   ],
   "author": "Stefan Stefanov <s.h.stefanov@mail.bg>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shstefanov/orbits-timer.git"
+  },
   "license": "ISC",
   "devDependencies": {
     "mocha": "^9.1.0"
