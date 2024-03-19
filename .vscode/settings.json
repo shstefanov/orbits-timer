@@ -1,7 +1,7 @@
 {
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
-    "window.title": "🖥️ ${rootNameShort}",
+    "window.title": "🧰 ${rootNameShort}",
     "files.encoding": "utf8",
     "files.trimTrailingWhitespace": false,
     "files.exclude": {
