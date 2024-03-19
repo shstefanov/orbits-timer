@@ -1,4 +1,125 @@
 {
-    "editor.tabSize": 4,
-    "window.title": "🖥️ ${rootNameShort}"
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "window.title": "🖥️ ${rootNameShort}",
+    "files.encoding": "utf8",
+    "files.trimTrailingWhitespace": false,
+    "files.exclude": {
+        "node_modules":      true,
+        ".git":              true,
+        "package-lock.json": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.git": true,
+        "**/.data": true,
+        "**/public/**/*.entry.*": true
+    },
+
+
+    "editor.quickSuggestions": {},
+    "editor.quickSuggestionsDelay": 100,
+    "editor.suggestOnTriggerCharacters": true,
+
+    "editor.selectionHighlight": true,
+    "editor.hideCursorInOverviewRuler": false,
+
+    "editor.renderWhitespace": "selection",
+
+    "editor.fontFamily":  "",
+    "editor.fontSize":    12,
+    "editor.lineHeight":  14,
+    "editor.lineNumbers": "on",
+    "editor.glyphMargin": false,
+    "editor.roundedSelection": false,
+    "editor.scrollBeyondLastLine": false,
+    "editor.mouseWheelScrollSensitivity": 1,
+    "editor.autoClosingBrackets": "always",
+    "editor.formatOnType": false,
+
+
+    "css.lint.compatibleVendorPrefixes": "ignore",
+    "css.lint.vendorPrefix": "warning",
+    "css.lint.duplicateProperties": "error",
+    "css.lint.emptyRules": "warning",
+    "css.lint.importStatement": "ignore",
+    "css.lint.boxModel": "warning",
+    "css.lint.universalSelector": "warning",
+    "css.lint.zeroUnits": "ignore",
+    "css.lint.fontFaceProperties": "error",
+    "css.lint.hexColorLength": "error",
+    "css.lint.argumentsInColorFunction": "error",
+    "css.lint.unknownProperties": "error",
+    "css.lint.ieHack": "warning",
+    "css.lint.unknownVendorSpecificProperties": "warning",
+    "css.lint.propertyIgnoredDueToDisplay": "warning",
+    "css.lint.important": "warning",
+    "css.lint.float": "ignore",
+    "css.lint.idSelector": "warning",
+
+    "markdown.styles": [],
+
+    "javascript.validate.enable": true,
+
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/bower.json",
+                "/.bower.json"
+            ],
+            "url": "http://json.schemastore.org/bower"
+        },
+        {
+            "fileMatch": [
+                "/package.json"
+            ],
+            "url": "http://json.schemastore.org/package"
+        },
+        {
+            "fileMatch": [
+                "/project.json"
+            ],
+            "url": "http://json.schemastore.org/project"
+        },
+        {
+            "fileMatch": [
+                "*.schema.json"
+            ],
+            "url": "http://json-schema.org/draft-04/schema#"
+        },
+        {
+            "fileMatch": [
+                "/global.json"
+            ],
+            "url": "http://json.schemastore.org/global"
+        },
+        {
+            "fileMatch": [
+                "/tsconfig.json"
+            ],
+            "url": "http://json.schemastore.org/tsconfig"
+        },
+        {
+            "fileMatch": [
+                "/.bowerrc"
+            ],
+            "url": "http://json.schemastore.org/bowerrc"
+        },
+        {
+            "fileMatch": [
+                "/.jshintrc"
+            ],
+            "url": "http://json.schemastore.org/jshintrc"
+        },
+        {
+            "fileMatch": [
+                "/.jscsrc"
+            ],
+            "url": "http://json.schemastore.org/jscsrc"
+        }
+    ],
+
+    "git.enabled": true,
+    "git.autofetch": false
+
 }
