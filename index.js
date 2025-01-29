@@ -72,7 +72,7 @@ class Timer {
 
 
 
-	start(min_step=40){
+	start(min_step=40, tick_fn = raf){
 		if(this.tick) return;
 		let now = Date.now();
 		const state = this.getState(now);
@@ -87,10 +87,10 @@ class Timer {
 				this.state = state;
 				now = new_now;
 			}
-			this.tick && raf(this.tick);
+			this.tick && tick_fn(this.tick);
 		}
 		this.tick.baseInterval = min_step;
-		raf(this.tick);
+		tick_fn(this.tick);
 	}
 
 	stop(){
