@@ -10,22 +10,37 @@ describe("OrbitsTimer#relInterval", () => {
 		const expectedIntervalResult = [0,3,6,9];
 		timer.relInterval(3, (state, cancel) => results.push(state.now));
 		for(let now of flow) timer.handleState(timer.state = timer.getState(now));
-		deepEqual(expectedIntervalResult, results);
+		deepEqual( results, expectedIntervalResult );
 	});
 
-	it("Triggers 'relInterval' at speed 1 (with base)", () => {
+	it("Triggers 'relInterval' at speed 1 (with positive small base)", () => {
 		const timer = new OrbitsTimer({ now: 0, anchor: 0, rel_now: 0, rel_start: 0, speed: 1 });
 		const flow = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];
 		const results = [];
-		const expectedIntervalResult = [0,5,8];
+		const expectedIntervalResult = [2,5,8];
 		timer.relInterval({
-			base:     2,
+			base:     2 + 3 * Math.round((Math.random() - 0.5) * 200),
 			interval: 3
 		}, (state, cancel) => {
 			results.push(state.now);
 		});
 		for(let now of flow) timer.handleState(timer.state = timer.getState(now));
-		deepEqual(expectedIntervalResult, results);
+		deepEqual(results, expectedIntervalResult);
+	});
+
+	it("Triggers 'relInterval' at speed 1 (with negative small base)", () => {
+		const timer = new OrbitsTimer({ now: 0, anchor: 0, rel_now: 0, rel_start: 0, speed: 1 });
+		const flow = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];
+		const results = [];
+		const expectedIntervalResult = [2,5,8];
+		timer.relInterval({
+			base:     -1,
+			interval:  3,
+		}, (state, cancel) => {
+			results.push(state.now);
+		});
+		for(let now of flow) timer.handleState(timer.state = timer.getState(now));
+		deepEqual(results, expectedIntervalResult);
 	});
 
 	it("Triggers 'relInterval' at speed 5 (no base)", () => {
@@ -42,7 +57,7 @@ describe("OrbitsTimer#relInterval", () => {
 		const timer = new OrbitsTimer({ now: 0, anchor: 0, rel_now: 0, rel_start: 0, speed: 2 });
 		const flow = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 ];
 		const results = [];
-		const expectedIntervalResult = [ 0, 7, 13, 18 ];
+		const expectedIntervalResult = [ 2, 7, 13, 18 ];
 		timer.relInterval({ base: 3, interval: 11 }, (state, cancel) => results.push(state.now));
 		for(let now of flow) timer.handleState(timer.state = timer.getState(now));
 		deepEqual(expectedIntervalResult, results);

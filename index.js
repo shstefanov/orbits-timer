@@ -12,6 +12,11 @@ const defaultOptions = {
 
 let tmp_default_anchor;
 
+function resolveTimingFunction(fn = Timer.LINEAR){
+	if(typeof fn === "string") return Timer[fn] || (() => { throw new Error(`Can't find timing function: ${fn}`) });
+	return fn;
+}
+
 class Timer {
 
 	constructor({
@@ -41,22 +46,18 @@ class Timer {
 	}
 
 	getState(current_now = Date.now()){
-		const {anchor, rel_anchor, speed, rel_start} = this.options;
-		const {now, rel_now} = this.state;
-		const delta = current_now - now;
-		const after_anchor = current_now - anchor;
-		const after_rel_anchor = after_anchor * speed;
+		const { anchor, rel_anchor, speed, rel_start } = this.options;
+		const { now, rel_now }  = this.state;
+		const after_anchor      = current_now - anchor;
+		const after_rel_anchor  = after_anchor * speed;
 		const before_rel_anchor = rel_anchor - rel_start;
-		const new_rel_now = before_rel_anchor + after_rel_anchor;
-
+		const new_rel_now       = before_rel_anchor + after_rel_anchor;
 		return {
 			delta:     current_now - now,
 			rel_delta: new_rel_now - rel_now,
 			now:       current_now,
 			rel_now:   new_rel_now,
 		}
-
-		// console.log({now})
 	}
 
 	handleState(state){
@@ -79,6 +80,7 @@ class Timer {
 		this.handleState(state);
 		this.state = state;
 		this.tick = () => {
+			if(!this.tick) return;
 			const new_now = Date.now();
 			const delta = new_now - now;
 			if(delta >= min_step){
@@ -160,10 +162,8 @@ class Timer {
 	}
 
 	handleAt(state){
-		const {now} = state;
-		for(let [fn] of this.ats.entries()){
-			const t = this.ats.get(fn);
-			if(now >= t.at){
+		for(let [fn, { at }] of this.ats.entries()){
+			if(state.now >= at){
 				this.removeAt(fn);
 				fn(state);
 			}
@@ -178,11 +178,13 @@ class Timer {
 		? 	{
 				period,
 				offset: this.state.now,
+				timing_function: Timer.LINEAR,
 				cancel: this.removePeriod.bind(this, fn),
 			}
 		: 	{
 				period: period.period,
 				offset: period.base,
+				timing_function: resolveTimingFunction(period.timing_function),
 				cancel: this.removePeriod.bind(this, fn),
 			};
 		this.periods.set(fn, t);
@@ -194,17 +196,15 @@ class Timer {
 	}
 
 	handlePeriods(state){
-		const {now} = state;
-		for(let [fn] of this.periods.entries()){
+		for(let [ fn, { offset, period, cancel, timing_function }] of this.periods.entries()){
 			const t = this.periods.get(fn);
-			const time_base = now - t.offset;
-			const period = t.period;
+			const time_base = state.now - offset;
 			const phase = (
 				time_base >= 0
 					? ( time_base % period)
 					: ( (period - 1) + (( time_base + 1 ) % period))
 				) / period;
-			fn(state, phase, t.cancel);
+			fn(state, timing_function(phase), cancel);
 		}
 	}
 
@@ -225,7 +225,7 @@ class Timer {
 			start = typeof duration.start === "number" ? duration.start : this.state.now;
 			dur = duration.duration
 			end = start + dur;
-			timing_function = duration.timing_function || Timer.LINEAR;
+			timing_function = resolveTimingFunction(duration.timing_function);
 		}
 
 		const t = {
@@ -243,18 +243,15 @@ class Timer {
 
 
 	handleTransitions(state){
-		const { now } = state;
-		for(let [fn] of this.transitions.entries()){
-			const t = this.transitions.get(fn);
-			const { start, end, duration, cancel } = t;
-			const path = (state.now - t.start) / t.duration;
+		for(const [fn, { start, duration, cancel, timing_function }] of this.transitions.entries()){
+			const path = (state.now - start) / duration;
 			if(path < 0) continue;
 			if(path >= 1){
-				fn(state, t.timing_function(1), t.cancel);
+				fn(state, timing_function(1), cancel);
 				this.removeTransition(fn);
 			}
 			else{
-				fn(state, t.timing_function(path), t.cancel);
+				fn(state, timing_function(path), cancel);
 			}
 		}
 	}
@@ -265,19 +262,28 @@ class Timer {
 
 
 	interval(interval, fn){
-		const t = typeof interval === "number"
-		? {
-			last_call:  this.state.now - interval,
-			anchor:     0,
-			interval:   interval,
-			cancel:     this.removeInterval.bind(this, fn),
+		let t;
+		if(typeof interval === "number"){
+			t = {
+				last_call:  this.state.now - interval,
+				interval:   interval,
+				cancel:     this.removeInterval.bind(this, fn),
+			};
 		}
-		: {
-			last_call:  interval.base - interval.interval,
-			anchor:     interval.base,
-			interval:   interval.interval,
-			cancel:     this.removeInterval.bind(this, fn),
-		};
+		else {
+			const diff = interval.base >= this.state.now
+				? interval.base - this.state.now
+				: -(this.state.now - interval.base);
+			let last_call = diff % interval.interval;
+
+			if(last_call >=this.state.now) last_call-=interval.interval;
+
+			t = {
+				last_call,
+				interval:   interval.interval,
+				cancel:     this.removeRelInterval.bind(this, fn),
+			};
+		}
 		this.intervals.set(fn, t);
 		return t;
 	}
@@ -288,11 +294,10 @@ class Timer {
 
 	handleIntervals(state){
 		const { now } = state;
-		for(let [fn] of this.intervals.entries()){
-			const t = this.intervals.get(fn);
+		for(const [fn, t ] of this.intervals.entries()){
 			const c = ( now - t.last_call) / t.interval;
 			if(c >= 1){
-				t.last_call = state.now;
+				t.last_call = t.last_call + t.interval;
 				fn(state, t.cancel);
 			}
 		}
@@ -338,23 +343,30 @@ class Timer {
 
 
 	relInterval(interval, fn){
-		const t = typeof interval === "number"
-		? {
-			// last_call:  this.state.rel_now - interval,
-			offset:     0,
-			base:       0,
-			interval:   interval,
-			cancel:     this.removeRelInterval.bind(this, fn),
+		let h;
+		let t;
+		// = typeof interval === "number"
+		if(typeof interval === "number"){
+			t = {
+				last_call:  this.state.rel_now - interval,
+				interval:   interval,
+				cancel:     this.removeRelInterval.bind(this, fn),
+			};
 		}
-		: {
-			// last_call:  interval.base,
-			offset:     this.state.rel_now - interval.base,
-			base:       interval.base,
-			interval:   interval.interval,
-			cancel:     this.removeRelInterval.bind(this, fn),
-		};
+		else {
+			const diff = interval.base >= this.state.rel_now
+				? interval.base - this.state.rel_now
+				: -(this.state.rel_now - interval.base);
+			let last_call = diff % interval.interval;
 
-		t.last_call = null;
+			if(last_call >=this.state.rel_now) last_call-=interval.interval;
+
+			t = {
+				last_call,
+				interval:   interval.interval,
+				cancel:     this.removeRelInterval.bind(this, fn),
+			};
+		}
 
 		this.relIntervals.set(fn, t);
 		return t;
@@ -366,12 +378,10 @@ class Timer {
 
 	handleRelIntervals(state){
 		const { rel_now } = state;
-		for(let [fn] of this.relIntervals.entries()){
-			const t = this.relIntervals.get(fn);
-			const c = rel_now - t.base;
-			const l = c - ( c % t.interval) + t.base;
-			if(l !== t.last_call){
-				t.last_call = l;
+		for(let [fn, t] of this.relIntervals.entries()){
+			const c = ( rel_now - t.last_call) / t.interval;
+			if(c >= 1){
+				t.last_call = t.last_call + t.interval;
 				fn(state, t.cancel);
 			}
 		}
@@ -384,11 +394,13 @@ class Timer {
 		? 	{
 				period,
 				offset: this.state.rel_now,
+				timing_function: Timer.LINEAR,
 				cancel: this.removeRelPeriod.bind(this, fn),
 			}
 		: 	{
 				period: period.period,
 				offset: period.base,
+				timing_function: resolveTimingFunction(period.timing_function),
 				cancel: this.removeRelPeriod.bind(this, fn),
 			};
 		this.relPeriods.set(fn, t);
@@ -401,16 +413,14 @@ class Timer {
 
 	handleRelPeriods(state){
 		const {rel_now} = state;
-		for(let [fn] of this.relPeriods.entries()){
-			const t = this.relPeriods.get(fn);
-			const time_base = rel_now - t.offset;
-			const period = t.period;
+		for(let [ fn, { offset, period, cancel } ] of this.relPeriods.entries()){
+			const time_base = rel_now - offset;
 			const phase = (
 				time_base >= 0
 					? ( time_base % period)
 					: ( (period - 1) + (( time_base + 1 ) % period))
 				) / period;
-			fn(state, phase, t.cancel);
+			fn(state, phase, cancel);
 		}
 	}
 
@@ -420,7 +430,6 @@ class Timer {
 
 
 	relTransition(duration, fn){
-		// const now = Date.now();
 		let start, end, dur, timing_function;
 		if(typeof duration === "number"){
 			dur             = duration;
@@ -432,7 +441,7 @@ class Timer {
 			start = typeof duration.start === "number" ? duration.start : this.state.rel_now;
 			dur = duration.duration
 			end = start + dur;
-			timing_function = duration.timing_function || Timer.LINEAR;
+			timing_function = resolveTimingFunction(duration.timing_function);
 		}
 
 		const t = {
@@ -456,7 +465,6 @@ class Timer {
 			const { start, end, duration, cancel } = t;
 			const path = (rel_now - t.start) / t.duration;
 			if(path < 0) return fn(state, t.timing_function(0), t.cancel);
-			if(path > 1) return fn(state, t.timing_function(1), t.cancel);
 			if(path >= 1){
 				fn(state, t.timing_function(1), t.cancel);
 				this.removeTransition(fn);
