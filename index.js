@@ -177,13 +177,13 @@ class Timer {
 		const t = typeof duration === "number"
 		? 	{
 				duration,
-				offset: this.state.now,
+				base: this.state.now,
 				timing_function: Timer.LINEAR,
 				cancel: this.removePeriod.bind(this, fn),
 			}
 		: 	{
 				duration: duration.duration,
-				offset: duration.base,
+				base: duration.base,
 				timing_function: resolveTimingFunction(duration.timing_function),
 				cancel: this.removePeriod.bind(this, fn),
 			};
@@ -196,9 +196,9 @@ class Timer {
 	}
 
 	handlePeriods(state){
-		for(let [ fn, { offset, duration, cancel, timing_function }] of this.periods.entries()){
+		for(let [ fn, { base, duration, cancel, timing_function }] of this.periods.entries()){
 			const t = this.periods.get(fn);
-			const time_base = state.now - offset;
+			const time_base = state.now - base;
 			const phase = (
 				time_base >= 0
 					? ( time_base % duration)
@@ -213,22 +213,22 @@ class Timer {
 
 	transition(duration, fn){
 		// const now = Date.now();
-		let start, end, dur, timing_function;
+		let base, end, dur, timing_function;
 		if(typeof duration === "number"){
 			dur             = duration;
-			start           = this.state.now;
-			end             = start + duration;
+			base           = this.state.now;
+			end             = base + duration;
 			timing_function = Timer.LINEAR;
 		}
 		else{timing_function
-			start = typeof duration.start === "number" ? duration.start : this.state.now;
+			base = typeof duration.base === "number" ? duration.base : this.state.now;
 			dur = duration.duration
-			end = start + dur;
+			end = base + dur;
 			timing_function = resolveTimingFunction(duration.timing_function);
 		}
 
 		const t = {
-			start, end, duration: dur, timing_function,
+			base, end, duration: dur, timing_function,
 			cancel: this.removeTransition.bind(this, fn),
 		}
 		this.transitions.set(fn, t);
@@ -242,8 +242,8 @@ class Timer {
 
 
 	handleTransitions(state){
-		for(const [fn, { start, duration, cancel, timing_function }] of this.transitions.entries()){
-			const path = (state.now - start) / duration;
+		for(const [fn, { base, duration, cancel, timing_function }] of this.transitions.entries()){
+			const path = (state.now - base) / duration;
 			if(path < 0) continue;
 			if(path >= 1){
 				fn(state, timing_function(1), cancel);
@@ -392,13 +392,13 @@ class Timer {
 		const t = typeof duration === "number"
 		? 	{
 				duration,
-				offset: this.state.rel_now,
+				base: this.state.rel_now,
 				timing_function: Timer.LINEAR,
 				cancel: this.removeRelPeriod.bind(this, fn),
 			}
 		: 	{
 				duration: duration.duration,
-				offset: duration.base,
+				base: duration.base,
 				timing_function: resolveTimingFunction(duration.timing_function),
 				cancel: this.removeRelPeriod.bind(this, fn),
 			};
@@ -412,14 +412,14 @@ class Timer {
 
 	handleRelPeriods(state){
 		const {rel_now} = state;
-		for(let [ fn, { offset, duration, cancel } ] of this.relPeriods.entries()){
-			const time_base = rel_now - offset;
+		for(let [ fn, { base, duration, timing_function, cancel } ] of this.relPeriods.entries()){
+			const time_base = rel_now - base;
 			const phase = (
 				time_base >= 0
-					? ( time_base % duration)
-					: ( (duration - 1) + (( time_base + 1 ) % duration))
-				) / duration;
-			fn(state, phase, cancel);
+					? ((rel_now - base) % duration ) / duration
+					: ( (duration - 1) + (( time_base + 1 ) % duration)) / duration
+				);
+			fn(state, timing_function(phase), cancel);
 		}
 	}
 
@@ -429,22 +429,22 @@ class Timer {
 
 
 	relTransition(duration, fn){
-		let start, end, dur, timing_function;
+		let base, end, dur, timing_function;
 		if(typeof duration === "number"){
 			dur             = duration;
-			start           = this.state.rel_now;
-			end             = start + duration;
+			base           = this.state.rel_now;
+			end             = base + duration;
 			timing_function = Timer.LINEAR;
 		}
 		else{
-			start = typeof duration.start === "number" ? duration.start : this.state.rel_now;
+			base = typeof duration.base === "number" ? duration.base : this.state.rel_now;
 			dur = duration.duration
-			end = start + dur;
+			end = base + dur;
 			timing_function = resolveTimingFunction(duration.timing_function);
 		}
 
 		const t = {
-			start, end, duration: dur, timing_function,
+			base, end, duration: dur, timing_function,
 			cancel: this.removeRelTransition.bind(this, fn),
 		}
 		this.relTransitions.set(fn, t);
@@ -461,8 +461,7 @@ class Timer {
 		const { rel_now } = state;
 		for(let [fn] of this.relTransitions.entries()){
 			const t = this.relTransitions.get(fn);
-			const { start, end, duration, cancel } = t;
-			const path = (rel_now - t.start) / t.duration;
+			const path = (rel_now - t.base) / t.duration;
 			if(path < 0) return fn(state, t.timing_function(0), t.cancel);
 			if(path >= 1){
 				fn(state, t.timing_function(1), t.cancel);

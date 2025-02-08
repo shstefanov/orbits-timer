@@ -18,7 +18,7 @@ describe("OrbitsTimer#relTransition", () => {
 		const flow = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ];
 		const results = [];
 		const expectedTransitionResult = [[0,0],[1,0],[2,0],[3,0],[4,0.5],[5,1],[6,1.5],[7,2],[8,2],[9,2],[10,2],[11,2]];
-		timer.relTransition({start: 9, duration: 12, timing_function: x => x * 2}, (state, value, cancel) => {
+		timer.relTransition({ base: 9, duration: 12, timing_function: x => x * 2}, (state, value, cancel) => {
 			results.push([state.now, value]);
 		});
 		for(let now of flow) timer.handleState(timer.state = timer.getState(now));

@@ -41,7 +41,7 @@ describe("OrbitsTimer#transition", () => {
 		const expectedTransitionResult = [[2,0],[3,0.25],[4,0.5],[5,0.75],[6,1],[7,1.25],[8,1.5],[9,1.75],[10,2]];
 
 		timer.transition({
-			start: 2, duration: 8, timing_function: x => x * 2
+			base: 2, duration: 8, timing_function: x => x * 2
 		}, (state, value, cancel) => {
 			results.push([state.now, value]);
 		});
