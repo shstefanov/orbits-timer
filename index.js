@@ -173,18 +173,18 @@ class Timer {
 
 
 
-	period(period, fn){
-		const t = typeof period === "number"
+	period(duration, fn){
+		const t = typeof duration === "number"
 		? 	{
-				period,
+				duration,
 				offset: this.state.now,
 				timing_function: Timer.LINEAR,
 				cancel: this.removePeriod.bind(this, fn),
 			}
 		: 	{
-				period: period.period,
-				offset: period.base,
-				timing_function: resolveTimingFunction(period.timing_function),
+				duration: duration.duration,
+				offset: duration.base,
+				timing_function: resolveTimingFunction(duration.timing_function),
 				cancel: this.removePeriod.bind(this, fn),
 			};
 		this.periods.set(fn, t);
@@ -196,18 +196,17 @@ class Timer {
 	}
 
 	handlePeriods(state){
-		for(let [ fn, { offset, period, cancel, timing_function }] of this.periods.entries()){
+		for(let [ fn, { offset, duration, cancel, timing_function }] of this.periods.entries()){
 			const t = this.periods.get(fn);
 			const time_base = state.now - offset;
 			const phase = (
 				time_base >= 0
-					? ( time_base % period)
-					: ( (period - 1) + (( time_base + 1 ) % period))
-				) / period;
+					? ( time_base % duration)
+					: ( (duration - 1) + (( time_base + 1 ) % duration))
+				) / duration;
 			fn(state, timing_function(phase), cancel);
 		}
 	}
-
 
 
 
@@ -389,18 +388,18 @@ class Timer {
 
 
 
-	relPeriod(period, fn){
-		const t = typeof period === "number"
+	relPeriod(duration, fn){
+		const t = typeof duration === "number"
 		? 	{
-				period,
+				duration,
 				offset: this.state.rel_now,
 				timing_function: Timer.LINEAR,
 				cancel: this.removeRelPeriod.bind(this, fn),
 			}
 		: 	{
-				period: period.period,
-				offset: period.base,
-				timing_function: resolveTimingFunction(period.timing_function),
+				duration: duration.duration,
+				offset: duration.base,
+				timing_function: resolveTimingFunction(duration.timing_function),
 				cancel: this.removeRelPeriod.bind(this, fn),
 			};
 		this.relPeriods.set(fn, t);
@@ -413,13 +412,13 @@ class Timer {
 
 	handleRelPeriods(state){
 		const {rel_now} = state;
-		for(let [ fn, { offset, period, cancel } ] of this.relPeriods.entries()){
+		for(let [ fn, { offset, duration, cancel } ] of this.relPeriods.entries()){
 			const time_base = rel_now - offset;
 			const phase = (
 				time_base >= 0
-					? ( time_base % period)
-					: ( (period - 1) + (( time_base + 1 ) % period))
-				) / period;
+					? ( time_base % duration)
+					: ( (duration - 1) + (( time_base + 1 ) % duration))
+				) / duration;
 			fn(state, phase, cancel);
 		}
 	}

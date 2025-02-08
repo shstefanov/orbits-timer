@@ -42,7 +42,7 @@ describe("OrbitsTimer#relPeriod", () => {
 		const expectedperiod4Result = [0.25,0.5,0.75,0,0.25,0.5,0.75,0,0.25,0.5,0.75];
 		const period4Result = [];
 		const period7Result = [];
-		timer.relPeriod({period: 4, base: 3}, (state, value, cancel) => period4Result.push(value));
+		timer.relPeriod({duration: 4, base: 3}, (state, value, cancel) => period4Result.push(value));
 		for(let now of flow) timer.handleState(timer.getState(now));
 		deepEqual(expectedperiod4Result, period4Result);
 	});
@@ -86,7 +86,7 @@ describe("OrbitsTimer#relPeriod", () => {
 		const expectedperiod4Result = [0.25,0,0.75,0.5,0.25,0,0.75,0.5,0.25,0,0.75];
 		const period4Result = [];
 		const period7Result = [];
-		timer.relPeriod({period: 4, base: 3}, (state, value, cancel) => period4Result.push(value));
+		timer.relPeriod({duration: 4, base: 3}, (state, value, cancel) => period4Result.push(value));
 		for(let now of flow) timer.handleState(timer.getState(now));
 		deepEqual(expectedperiod4Result, period4Result);
 	});

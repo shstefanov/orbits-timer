@@ -32,7 +32,7 @@ describe("OrbitsTimer#period", () => {
 		const flow = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];
 		const expectedperiod4Result = [0.25,0.5,0.75,0,0.25,0.5,0.75,0,0.25,0.5,0.75];
 		const period4Result = [];
-		timer.period({period: 4, base: 3}, (state, value, cancel) => {
+		timer.period({duration: 4, base: 3}, (state, value, cancel) => {
 			period4Result.push(value);
 		});
 		for(let now of flow) timer.handleState(timer.getState(now));

@@ -183,7 +183,7 @@ timer.relPeriod
 	timer.relPeriod({
 		base:    timestamp,            // When the period is started
 		duration: duration,            // Duration in milliseconds
-		timing_function: "LINEAR"      // Optional, can be xustom function, default 'LINEAR'
+		timing_function: "LINEAR"      // Optional, can be custom function, default 'LINEAR'
 	}, function(state, phase, cancel){
 		// 'phase' is number between 0 and 1 and represents the path between begin and end of the transition
 		// 'cancel' is function that will remove the transition from timer queue
