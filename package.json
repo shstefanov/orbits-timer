@@ -12,7 +12,7 @@
   "author": "Stefan Stefanov <s.h.stefanov@mail.bg>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shstefanov/orbits-timer.git"
+    "url": "git+https://github.com/shstefanov/orbits-timer.git"
   },
   "license": "ISC",
   "devDependencies": {
