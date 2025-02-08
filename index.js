@@ -221,7 +221,7 @@ class Timer {
 			end             = start + duration;
 			timing_function = Timer.LINEAR;
 		}
-		else{
+		else{timing_function
 			start = typeof duration.start === "number" ? duration.start : this.state.now;
 			dur = duration.duration
 			end = start + dur;
