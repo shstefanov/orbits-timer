@@ -88,7 +88,7 @@ timer.transition
 
 	// or with more specific attributes 
 	timer.transition({
-		start:    timestamp,           // When the transition is started
+		base:    timestamp,           // When the transition is started
 		duration: duration,            // Duration in milliseconds
 		timing_function: x => 1 / x    // Optional timing function that will modify value of phase
 	}, function(state, phase, cancel){
@@ -118,7 +118,7 @@ timer.period
 		// 'cancel' is function that will remove the transition from timer queue
 	});
 ```
-Same as transition, but will be repeated continuously and will act proportionaly 
+Same as transition, but will be repeated continuously and will act proportionaly
 before start and after end
 
 
@@ -160,7 +160,7 @@ timer.relTransition
 
 	// or with more specific attributes 
 	timer.relTransition({
-		start:    timestamp,           // When the transition is started, default is current rel_now
+		base:    timestamp,           // When the transition is started, default is current rel_now
 		duration: duration,            // Duration in milliseconds
 		timing_function: x => 1 / x    // Optional timing function that will modify value of phase or name of one of built-in functions
 	}, function(state, phase, cancel){
