@@ -216,7 +216,7 @@ class Timer {
 		let base, end, dur, timing_function;
 		if(typeof duration === "number"){
 			dur             = duration;
-			base           = this.state.now;
+			base            = this.state.now;
 			end             = base + duration;
 			timing_function = Timer.LINEAR;
 		}
